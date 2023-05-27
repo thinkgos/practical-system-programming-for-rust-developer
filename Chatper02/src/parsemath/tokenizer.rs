@@ -31,32 +31,34 @@ impl<'a> Iterator for Tokenizer<'a> {
 
     fn next(&mut self) -> Option<Token> {
         let next_char = self.expr.next();
+        if let Some(char) = next_char {
+            match char {
+                '0'..='9' => {
+                    let mut number = char.to_string();
 
-        match next_char {
-            Some('0'..='9') => {
-                let mut number = next_char?.to_string();
-
-                while let Some(next_char) = self.expr.peek() {
-                    if next_char.is_numeric() || next_char == &'.' {
-                        number.push(self.expr.next()?);
-                    } else if next_char == &'(' {
-                        return None;
-                    } else {
-                        break;
+                    while let Some(next_char) = self.expr.peek() {
+                        if next_char.is_numeric() || next_char == &'.' {
+                            number.push(self.expr.next()?);
+                        } else if next_char == &'(' {
+                            return None;
+                        } else {
+                            break;
+                        }
                     }
-                }
 
-                Some(Token::Num(number.parse::<f64>().unwrap()))
+                    Some(Token::Num(number))
+                }
+                '+' => Some(Token::Add),
+                '-' => Some(Token::Subtract),
+                '*' => Some(Token::Multiply),
+                '/' => Some(Token::Divide),
+                '^' => Some(Token::Caret),
+                '(' => Some(Token::LeftParen),
+                ')' => Some(Token::RightParen),
+                _ => None,
             }
-            Some('+') => Some(Token::Add),
-            Some('-') => Some(Token::Subtract),
-            Some('*') => Some(Token::Multiply),
-            Some('/') => Some(Token::Divide),
-            Some('^') => Some(Token::Caret),
-            Some('(') => Some(Token::LeftParen),
-            Some(')') => Some(Token::RightParen),
-            None => Some(Token::EOF),
-            Some(_) => None,
+        } else {
+            Some(Token::EOF)
         }
     }
 }
@@ -69,17 +71,22 @@ mod tests {
     #[test]
     fn test_positive_integer() {
         let mut tokenizer = Tokenizer::new("34");
-        assert_eq!(tokenizer.next().unwrap(), Token::Num(34.0))
+        assert_eq!(tokenizer.next(), Some(Token::Num("34.0".to_owned())));
     }
     #[test]
     fn test_decimal_number() {
         let mut tokenizer = Tokenizer::new("34.5");
-        assert_eq!(tokenizer.next().unwrap(), Token::Num(34.5))
+        assert_eq!(tokenizer.next(), Some(Token::Num("34.5".to_owned())));
+    }
+    #[test]
+    fn test_invalid_char() {
+        let mut tokenizer = Tokenizer::new("#$%");
+        assert_eq!(tokenizer.next(), None);
     }
     #[test]
     #[ignore]
-    fn test_invalid_char() {
-        let mut tokenizer = Tokenizer::new("#$%");
-        assert_eq!(tokenizer.next().unwrap(), Token::Num(34.5));
+    fn test_invalid_number() {
+        let mut tokenizer = Tokenizer::new("3.1.1");
+        assert_eq!(tokenizer.next(), Some(Token::Num("3.1.1".to_owned())));
     }
 }

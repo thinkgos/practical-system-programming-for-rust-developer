@@ -1,8 +1,7 @@
-/// This program reads tokens returned by Tokenizer and converts them into AST.
-// Standard lib
+use std::error;
 use std::fmt;
+use std::num;
 
-// Internal modules
 use super::ast::Node;
 use super::token::{OperPrec, Token};
 use super::tokenizer::Tokenizer;
@@ -21,10 +20,9 @@ impl<'a> Parser<'a> {
     // Create a new instance of Parser
     pub fn new(expr: &'a str) -> Result<Self, ParseError> {
         let mut lexer = Tokenizer::new(expr);
-        let cur_token = match lexer.next() {
-            Some(token) => token,
-            None => return Err(ParseError::InvalidOperator("Invalid character".into())),
-        };
+        let cur_token = lexer
+            .next()
+            .ok_or_else(|| ParseError::InvalidOperator("Invalid character".into()))?;
         Ok(Parser {
             tokenizer: lexer,
             current_token: cur_token,
@@ -34,11 +32,7 @@ impl<'a> Parser<'a> {
     // Take an arithmetic expression as input and return an AST
 
     pub fn parse(&mut self) -> Result<Node, ParseError> {
-        let ast = self.generate_ast(OperPrec::DefaultZero);
-        match ast {
-            Ok(ast) => Ok(ast),
-            Err(e) => Err(e),
-        }
+        self.generate_ast(OperPrec::DefaultZero)
     }
 }
 
@@ -47,11 +41,10 @@ impl<'a> Parser<'a> {
 impl<'a> Parser<'a> {
     // Retrieve the next token from arithmetic expression and set it to current_token field in Parser struct
     fn get_next_token(&mut self) -> Result<(), ParseError> {
-        let next_token = match self.tokenizer.next() {
-            Some(token) => token,
-            None => return Err(ParseError::InvalidOperator("Invalid character".into())),
-        };
-        self.current_token = next_token;
+        self.current_token = self
+            .tokenizer
+            .next()
+            .ok_or_else(|| ParseError::InvalidOperator("Invalid character".into()))?;
         Ok(())
     }
 
@@ -82,7 +75,7 @@ impl<'a> Parser<'a> {
             }
             Token::Num(i) => {
                 self.get_next_token()?;
-                Ok(Node::Number(i))
+                Ok(Node::Number(i.parse::<f64>()?))
             }
             Token::LeftParen => {
                 self.get_next_token()?;
@@ -160,31 +153,28 @@ impl<'a> Parser<'a> {
 pub enum ParseError {
     UnableToParse(String),
     InvalidOperator(String),
+    InvalidNumber(String),
 }
 
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self {
-            self::ParseError::UnableToParse(e) => write!(f, "Error in evaluating {}", e),
-            self::ParseError::InvalidOperator(e) => write!(f, "Error in evaluating {}", e),
+            self::ParseError::UnableToParse(e) => write!(f, "Error unable to parse {}", e),
+            self::ParseError::InvalidOperator(e) => write!(f, "Error invalid operator {}", e),
+            self::ParseError::InvalidNumber(e) => write!(f, "Error parse number {}", e),
         }
     }
 }
 
-/*impl error::Error for ParseError {
-    fn description(&self) -> &str {
-        match &self {
-            self::ParseError::UnableToParse(e) => &e,
-            self::ParseError::InvalidOperator(e) => &e,
-        }
+impl From<Box<dyn error::Error>> for ParseError {
+    fn from(_e: Box<dyn error::Error>) -> Self {
+        Self::UnableToParse("Unable to parse".into())
     }
-}*/
+}
 
-// Handle error thrown from AST module
-
-impl std::convert::From<std::boxed::Box<dyn std::error::Error>> for ParseError {
-    fn from(_evalerr: std::boxed::Box<dyn std::error::Error>) -> Self {
-        return ParseError::UnableToParse("Unable to parse".into());
+impl From<num::ParseFloatError> for ParseError {
+    fn from(e: num::ParseFloatError) -> Self {
+        Self::InvalidNumber(e.to_string())
     }
 }
 

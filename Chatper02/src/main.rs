@@ -4,17 +4,17 @@ use std::io;
 
 // code for arithmetic expression evaluation is in parsemath module
 mod parsemath;
-use parsemath::ast;
 use parsemath::parser::{ParseError, Parser};
 
 // Function to invoke Parser and evaluate expression
 fn evaluate(expr: String) -> Result<f64, ParseError> {
     let expr = expr.split_whitespace().collect::<String>(); // remove whitespace chars
+
     let mut math_parser = Parser::new(&expr)?;
     let ast = math_parser.parse()?;
     println!("The generated AST is {:?}", ast);
 
-    Ok(ast::eval(ast)?)
+    Ok(ast.eval()?)
 }
 
 // Main function reads aritnmetic expression from command-line and displays result and error.

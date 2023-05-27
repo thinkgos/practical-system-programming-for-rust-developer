@@ -11,14 +11,13 @@ pub enum Token {
     Caret,
     LeftParen,
     RightParen,
-    Num(f64),
+    Num(String),
     EOF,
 }
 
-// Order of operators as per operator precedence rules (low to high)
-
-#[derive(Debug, PartialEq, PartialOrd)]
+/// Order of operators as per operator precedence rules (low to high)
 /// Defines all the OperPrec levels, from lowest to highest.
+#[derive(Debug, PartialEq, PartialOrd)]
 pub enum OperPrec {
     DefaultZero,
     AddSub,
@@ -27,18 +26,14 @@ pub enum OperPrec {
     Negative,
 }
 
-// This contains methods to retrieve operator precedence for a given arithmetic operator
-
 impl Token {
     pub fn get_oper_prec(&self) -> OperPrec {
-        use self::OperPrec::*;
-        use self::Token::*;
-        match *self {
-            Add | Subtract => AddSub,
-            Multiply | Divide => MulDiv,
-            Caret => Power,
+        match self {
+            Token::Add | Token::Subtract => OperPrec::AddSub,
+            Token::Multiply | Token::Divide => OperPrec::MulDiv,
+            Token::Caret => OperPrec::Power,
 
-            _ => DefaultZero,
+            _ => OperPrec::DefaultZero,
         }
     }
 }
