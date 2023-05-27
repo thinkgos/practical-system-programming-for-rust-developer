@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "first-program",
+    "first-lib",
+    "deps-example",
+    "test-example",
+    "integ-test-example"
+]
