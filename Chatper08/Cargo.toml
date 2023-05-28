@@ -1,0 +1,21 @@
+[package]
+name = "Chatper08"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "iter1"
+path = "bin/iter1.rs"
+
+[[bin]]
+name = "iter2"
+path = "bin/iter2.rs"
+
+[[bin]]
+name = "iter3"
+path = "bin/iter3.rs"
+
+[dependencies]
+signal-hook = "0.3"
